@@ -63,7 +63,29 @@
         href + '">Yahoo! Calendar</a>';
     },
 
+    outlook: function(event, eClass, calendarName) {
+      var dateNow = new Date(Date.now());
+      var currentTime = dateNow.toISOString();
+      var startTime = event.start.toISOString();
+      var endTime = calculateEndTime(event);
+
+      var href = encodeURI([
+      	'https://outlook.office.com/calendar/deeplink/compose?',
+		'version=' + currentTime,
+		'&rru=addevent',
+		'&popoutv2=1',
+		'&startdt=' + (startTime || ''),
+		'&enddt=' + (endTime || ''),
+		'&subject=' + (event.title || ''),
+		'&body=' + (event.description || ''),
+		'&location=' + (event.address || ''),
+      ].join(''));
+      return '<a class="' + eClass + '" target="_blank" href="' +
+        href + '">' + calendarName + ' Calendar</a>';
+    },
+
     ics: function(event, eClass, calendarName) {
+    	console.log(event);
       var startTime = formatTime(event.start);
       var endTime = calculateEndTime(event);
 
@@ -84,13 +106,53 @@
       return '<a class="' + eClass + '" target="_blank" href="' +
         href + '">' + calendarName + ' Calendar</a>';
     },
+	
+	icsOutlook: function(event, eClass, calendarName, nodeId) {
+	  var dateNow = new Date(Date.now());
+      var currentTime = formatTime(dateNow);
+      var startTime = formatTime(event.start);
+      var endTime = calculateEndTime(event);
+
+      var href = encodeURI(
+        'data:text/calendar;charset=utf8,' + [
+			'BEGIN:VCALENDAR',
+				'VERSION:2.0',
+				'PRODID:-//tida.oist.jp v1.6//EN',
+				'BEGIN:VEVENT',
+					'DTSTAMP:' + currentTime, // Mandatory for Outlook
+					'STATUS:CONFIRMED',
+					'UID:node-' + (nodeId || '') + '@tida.oist.jp',
+					'SEQUENCE:0',
+					'DTSTART:' + (startTime || ''),
+					'DTEND:' + (endTime || ''),
+					'SUMMARY:' + (event.title || ''),
+					'DESCRIPTION:' + (event.description || ''),
+					'X-ALT-DESC;FMTTYPE=text/html:'+ (event.description || ''), // with HTML is possible here
+					'BEGIN:VALARM',
+						'TRIGGER:-PT15M',
+						'ACTION:DISPLAY',
+					'END:VALARM',
+					'TRANSP:OPAQUE',
+				'END:VEVENT',
+			'END:VCALENDAR'
+        ].join('\n'));
+
+      console.log(href);
+
+      return '<a class="' + eClass + '" target="_target" href="' +
+        href + '">' + calendarName + ' Calendar</a>';
+    },
 
     ical: function(event) {
       return this.ics(event, 'icon-ical', 'iCal');
     },
 
-    outlook: function(event) {
-      return this.ics(event, 'icon-outlook', 'Outlook');
+    outlookApp: function(event) {
+      return this.icsOutlook(event, 'icon-outlook', 'Outlook App', '33333');
+    },
+
+    outlookOnline: function(event) {
+      return this.outlook(event, 'icon-outlook js-owa', 'Outlook (Office 365)');
     }
   };
 
@@ -99,7 +161,8 @@
       google: calendarGenerators.google(event),
       yahoo: calendarGenerators.yahoo(event),
       ical: calendarGenerators.ical(event),
-      outlook: calendarGenerators.outlook(event)
+      outlook: calendarGenerators.outlookApp(event),
+	  outlookOnline: calendarGenerators.outlookOnline(event)
     };
   };
 
