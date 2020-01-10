@@ -139,7 +139,7 @@
 
       console.log(href);
 
-      return '<a class="' + eClass + '" target="_target" href="' +
+      return '<a class="' + eClass + '" target="_blank" href="' +
         href + '">' + calendarName + ' Calendar</a>';
     },
 
